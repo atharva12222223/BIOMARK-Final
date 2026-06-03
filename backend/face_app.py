@@ -1,4 +1,6 @@
 import os, re, base64
+from dotenv import load_dotenv
+load_dotenv()  # Loads .env variables locally
 import cv2, numpy as np, qrcode
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, FileResponse

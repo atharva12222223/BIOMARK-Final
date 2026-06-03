@@ -1,6 +1,8 @@
 
 
 import os, sys, cv2, numpy as np, sqlite3, time
+from dotenv import load_dotenv
+load_dotenv()  # Loads .env variables locally
 from datetime import datetime
 
 # ── Try importing openpyxl ──────────────────────────────
