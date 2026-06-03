@@ -338,31 +338,6 @@ def student_attendance(request:Request):
     return StreamingResponse(iter([out.getvalue()]),media_type="text/csv",
                              headers={"Content-Disposition":"attachment; filename=my_attendance.csv"})
 
-@app.get("/api/teacher/export/{type}")
-def t_export(type:str,request:Request):
-    teacher_only(request)
-    db  = get_db(); out = io.StringIO(); w = csv.writer(out)
-    try:
-        if type=="students":
-            w.writerow(["Name","Reg No","Class","Present","Total","Att %"])
-            rows=_fetchall(db, "SELECT s.name,s.regno,s.cls,SUM(CASE WHEN a.present=1 THEN 1 ELSE 0 END) AS pres,COUNT(a.id) AS tot,ROUND(100.0*SUM(CASE WHEN a.present=1 THEN 1 ELSE 0 END)/NULLIF(COUNT(a.id),0),1) AS pct FROM students s LEFT JOIN attendance a ON a.student_id=s.id GROUP BY s.id,s.name,s.regno,s.cls ORDER BY s.name")
-            for r in rows: w.writerow([row_val(r,"name"),row_val(r,"regno"),row_val(r,"cls"),row_val(r,"pres"),row_val(r,"tot"),row_val(r,"pct")])
-        elif type=="marks":
-            w.writerow(["Name","Reg No","Subject","Marks","Grade"])
-            rows=_fetchall(db, "SELECT s.name,s.regno,m.subject,m.marks,m.grade FROM marks m JOIN students s ON s.id=m.student_id ORDER BY s.name,m.subject")
-            for r in rows: w.writerow([row_val(r,"name"),row_val(r,"regno"),row_val(r,"subject"),row_val(r,"marks"),row_val(r,"grade")])
-        elif type=="attendance":
-            w.writerow(["Name","Reg No","Date","Present"])
-            rows=_fetchall(db, "SELECT s.name,s.regno,a.date,a.present FROM attendance a JOIN students s ON s.id=a.student_id ORDER BY s.name,a.date")
-            for r in rows: w.writerow([row_val(r,"name"),row_val(r,"regno"),row_val(r,"date"),"Yes" if row_val(r,"present") else "No"])
-        else:
-            raise HTTPException(400,"Unknown type")
-    finally:
-        db.close()
-    out.seek(0)
-    return StreamingResponse(iter([out.getvalue()]),media_type="text/csv",
-                             headers={"Content-Disposition":f"attachment; filename=biomark_{type}.csv"})
-
 @app.get("/api/teacher/export/qrcodes")
 def t_export_all_qrs(request:Request):
     """Generate a ZIP file containing QR codes for all registered students."""
@@ -389,6 +364,31 @@ def t_export_all_qrs(request:Request):
         buf,
         media_type="application/zip",
         headers={"Content-Disposition":"attachment; filename=biomark_all_qrcodes.zip"})
+
+@app.get("/api/teacher/export/{type}")
+def t_export(type:str,request:Request):
+    teacher_only(request)
+    db  = get_db(); out = io.StringIO(); w = csv.writer(out)
+    try:
+        if type=="students":
+            w.writerow(["Name","Reg No","Class","Present","Total","Att %"])
+            rows=_fetchall(db, "SELECT s.name,s.regno,s.cls,SUM(CASE WHEN a.present=1 THEN 1 ELSE 0 END) AS pres,COUNT(a.id) AS tot,ROUND(100.0*SUM(CASE WHEN a.present=1 THEN 1 ELSE 0 END)/NULLIF(COUNT(a.id),0),1) AS pct FROM students s LEFT JOIN attendance a ON a.student_id=s.id GROUP BY s.id,s.name,s.regno,s.cls ORDER BY s.name")
+            for r in rows: w.writerow([row_val(r,"name"),row_val(r,"regno"),row_val(r,"cls"),row_val(r,"pres"),row_val(r,"tot"),row_val(r,"pct")])
+        elif type=="marks":
+            w.writerow(["Name","Reg No","Subject","Marks","Grade"])
+            rows=_fetchall(db, "SELECT s.name,s.regno,m.subject,m.marks,m.grade FROM marks m JOIN students s ON s.id=m.student_id ORDER BY s.name,m.subject")
+            for r in rows: w.writerow([row_val(r,"name"),row_val(r,"regno"),row_val(r,"subject"),row_val(r,"marks"),row_val(r,"grade")])
+        elif type=="attendance":
+            w.writerow(["Name","Reg No","Date","Present"])
+            rows=_fetchall(db, "SELECT s.name,s.regno,a.date,a.present FROM attendance a JOIN students s ON s.id=a.student_id ORDER BY s.name,a.date")
+            for r in rows: w.writerow([row_val(r,"name"),row_val(r,"regno"),row_val(r,"date"),"Yes" if row_val(r,"present") else "No"])
+        else:
+            raise HTTPException(400,"Unknown type")
+    finally:
+        db.close()
+    out.seek(0)
+    return StreamingResponse(iter([out.getvalue()]),media_type="text/csv",
+                             headers={"Content-Disposition":f"attachment; filename=biomark_{type}.csv"})
 
 # ══════════════════════════════════════════════════════════
 #  QR CODE (moved here so teacher dashboard works online)
