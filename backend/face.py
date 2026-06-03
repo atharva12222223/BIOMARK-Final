@@ -90,7 +90,7 @@ def mark_remote(regno, date):
         r = requests.post(
             f"{REMOTE_API_URL.rstrip('/')}/api/face/mark-attendance",
             json={"regno": regno.upper(), "api_key": FACE_API_KEY},
-            timeout=5
+            timeout=60
         )
         return r.status_code == 200
     except Exception as e:

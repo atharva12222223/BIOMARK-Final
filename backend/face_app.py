@@ -72,7 +72,7 @@ def register(r:RegReq):
                 f"{REMOTE_API_URL.rstrip('/')}/api/face/register-student",
                 json={"name":r.name, "regno":r.regno, "cls":r.cls,
                       "password":r.password, "api_key":FACE_API_KEY},
-                timeout=10
+                timeout=60
             )
             if resp.status_code == 200:
                 remote_msg = " (synced to remote)"
